@@ -1,0 +1,71 @@
+﻿@model List<Movie>
+
+<h2>Movie List</h2>
+
+@if (TempData["Errors"] != null)
+{
+    var errors = TempData["Errors"] as List<string>;
+    if (errors != null && errors.Any())
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var error in errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Genres</th>
+            <th>Year</th>
+            <th>Duration (min)</th>
+            <th>Age Rating</th>
+            <th>Rotten Tomatoes</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var movie = Model[i];
+            <tr>
+                <td>@(i + 1)</td>
+                <td>@movie.Title</td>
+                <td>@string.Join(", ", movie.MovieGenres.Select(mg => mg.Genre.Name))</td>
+                <td>@movie.Year</td>
+                <td>@movie.DurationMinutes</td>
+                <td>@movie.AgeRating</td>
+                <td>@($"{movie.RottenTomatoesRating}%")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-warning btn-sm">Edit</a>
+                    <form asp-action="Delete" asp-route-id="@movie.Id" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Add" class="btn btn-primary">Add New Movie</a>
+
+<script>
+    setTimeout(function () {
+        document.querySelector('.alert-success')?.remove();
+    }, 5000);
+</script>

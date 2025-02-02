@@ -1,0 +1,33 @@
+﻿@model VerifyEmailViewModel
+
+<h2>Verify Your Email</h2>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@if (TempData["LoggerError"] != null)
+{
+    <div class="alert alert-danger">@TempData["LoggerError"]</div>
+}
+
+<form asp-action="VerifyEmail" method="post">
+    <input type="hidden" asp-for="VerificationType" />
+    <div class="form-group">
+        <label asp-for="Email"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Token"></label>
+        <input asp-for="Token" class="form-control" />
+        <span asp-validation-for="Token" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Verify Email</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
