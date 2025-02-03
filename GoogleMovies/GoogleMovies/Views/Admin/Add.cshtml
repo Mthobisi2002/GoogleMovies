@@ -1,19 +1,34 @@
-﻿@model AddMovieViewModel
+﻿@using Newtonsoft.Json;
+@model AddMovieViewModel
 
 <h2>Add New Movie</h2>
 
-@if (TempData["Errors"] != null)
+@if (TempData["ValidationErrors"] != null)
 {
-    var errors = TempData["Errors"] as List<string>;
-    if (errors != null && errors.Any())
+    var validationErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ValidationErrors"].ToString());
+    if (validationErrors != null && validationErrors.Any())
     {
         <div class="alert alert-danger">
             <ul>
-                @foreach (var error in errors)
+                @foreach (var error in validationErrors)
                 {
                     <li>@error</li>
                 }
             </ul>
+        </div>
+    }
+}
+
+@if (TempData["ExceptionErrors"] != null)
+{
+    var exceptionErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ExceptionErrors"].ToString());
+    if (exceptionErrors != null && exceptionErrors.Any())
+    {
+        <div class="alert alert-warning">
+            @foreach (var error in exceptionErrors)
+            {
+                <p>@error</p>
+            }
         </div>
     }
 }

@@ -19,6 +19,9 @@ namespace GoogleMovies.Models
         public List<string> CastNames { get; set; } = new List<string>(); // ✅ No more null errors
         public List<string> CastImages { get; set; } = new List<string>(); // ✅ Avoid null errors
         public List<SelectListItem> GenreList { get; set; } = new List<SelectListItem>(); // ✅ Always initialized
+        public DateTime CreatedDate { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public string CreatedBy { get; set; }
     }
 
 }

@@ -1,19 +1,36 @@
-﻿@model EditMovieViewModel
+﻿@using Newtonsoft.Json;
+@model EditMovieViewModel
+
 
 <h2>Edit Movie</h2>
 
-@if (TempData["Errors"] != null)
+
+@if (TempData["ValidationErrors"] != null)
 {
-    var errors = TempData["Errors"] as List<string>;
-    if (errors != null && errors.Any())
+    var validationErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ValidationErrors"].ToString());
+    if (validationErrors != null && validationErrors.Any())
     {
         <div class="alert alert-danger">
             <ul>
-                @foreach (var error in errors)
+                @foreach (var error in validationErrors)
                 {
                     <li>@error</li>
                 }
             </ul>
+        </div>
+    }
+}
+
+@if (TempData["ExceptionErrors"] != null)
+{
+    var exceptionErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ExceptionErrors"].ToString());
+    if (exceptionErrors != null && exceptionErrors.Any())
+    {
+        <div class="alert alert-warning">
+            @foreach (var error in exceptionErrors)
+            {
+                <p>@error</p>
+            }
         </div>
     }
 }
@@ -90,21 +107,29 @@
         <input type="url" id="ImageUrl" name="ImageUrl" value="@Model.ImageUrl" />
     </div>
 
-    <!-- Cast Members (Max: 3) -->
     <div>
-        <label>Cast Members (Max: 3)</label>
+        <label>Cast Members (Min: 1, Max: 3)</label>
         <div id="cast-container">
-            @for (int i = 0; i < (Model.CastNames?.Count ?? 0); i++)
+            @if (Model.CastNames != null && Model.CastNames.Count > 0)
+            {
+                @for (int i = 0; i < Model.CastNames.Count; i++)
+                {
+                    <div class="cast-entry">
+                        <input type="text" name="CastNames[@i]" class="cast-input" placeholder="Enter cast name" value="@Model.CastNames[i]" required />
+                        <input type="text" name="CastImages[@i]" class="cast-image-input" placeholder="Enter cast image URL" value="@(Model.CastImages != null && Model.CastImages.Count > i ? Model.CastImages[i] : "")" />
+                    </div>
+                }
+            }
+            else
             {
                 <div class="cast-entry">
-                    <input type="text" name="CastNames[@i]" class="cast-input" placeholder="Enter cast name" value="@Model.CastNames[i]" required />
-                    <input type="text" name="CastImages[@i]" class="cast-image-input" placeholder="Enter cast image URL" value="@Model.CastImages[i]" />
-                    <button type="button" class="remove-cast-btn">Remove</button>
+                    <input type="text" name="CastNames[0]" class="cast-input" placeholder="Enter cast name" required />
+                    <input type="text" name="CastImages[0]" class="cast-image-input" placeholder="Enter cast image URL" />
                 </div>
             }
         </div>
-        <button type="button" id="add-cast-btn">Add Another Cast</button>
     </div>
+
 
     <!-- Save Button -->
     <button type="submit">Save Movie</button>

@@ -36,7 +36,10 @@
             <th>Duration (min)</th>
             <th>Age Rating</th>
             <th>Rotten Tomatoes</th>
+            <th>Created Date</th>
+            <th>Modified Date</th>
             <th>Actions</th>
+
         </tr>
     </thead>
     <tbody>
@@ -51,6 +54,8 @@
                 <td>@movie.DurationMinutes</td>
                 <td>@movie.AgeRating</td>
                 <td>@($"{movie.RottenTomatoesRating}%")</td>
+                <td>@movie.CreatedDate</td>
+                <td>@movie.ModifiedDate</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-warning btn-sm">Edit</a>
                     <form asp-action="Delete" asp-route-id="@movie.Id" method="post" style="display:inline;">
