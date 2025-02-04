@@ -22,6 +22,9 @@ namespace GoogleMovies.Models
         public DateTime CreatedDate { get; set; }
         public DateTime ModifiedDate { get; set; }
         public string CreatedBy { get; set; }
+
+        // Add this property
+        public List<SelectListItem> Genres { get; set; }
     }
 
 }

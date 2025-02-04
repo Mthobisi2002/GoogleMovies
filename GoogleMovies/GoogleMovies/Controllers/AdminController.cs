@@ -243,11 +243,10 @@ namespace GoogleMovies.Controllers
         [HttpGet]
         public IActionResult Edit(Guid id)
         {
+            // Fetch the movie along with its casts
             var movie = _context.Movies
-                .Include(m => m.MovieCasts)
-                .ThenInclude(mc => mc.Cast)
-                .Include(m => m.MovieGenres)
-                .ThenInclude(mg => mg.Genre) // Include genres in case you want to show them
+                .Include(m => m.MovieCasts) // Include MovieCasts
+                .ThenInclude(mc => mc.Cast) // Include Cast details
                 .FirstOrDefault(m => m.Id == id);
 
             if (movie == null)
@@ -255,7 +254,7 @@ namespace GoogleMovies.Controllers
                 return NotFound();
             }
 
-            // Populate the view model with movie data
+            // Create the EditMovieViewModel
             var model = new EditMovieViewModel
             {
                 Id = movie.Id,
@@ -269,123 +268,139 @@ namespace GoogleMovies.Controllers
                 Description = movie.Description,
                 TrailerUrl = movie.TrailerUrl,
                 ImageUrl = movie.ImageUrl,
-                GenreIds = movie.MovieGenres.Select(mg => mg.GenreId).ToList(),
-                GenreList = _context.Genres.Select(g => new SelectListItem
+
+                CastNames = movie.MovieCasts?.Select(mc => mc.Cast?.Name).ToList() ?? new List<string>(),
+                CastImages = movie.MovieCasts?.Select(mc => mc.Cast?.ImageUrl).ToList() ?? new List<string>(),
+
+                // Changed from List<int> to List<Guid>
+                GenreIds = movie.MovieGenres?.Select(mg => mg.GenreId).ToList() ?? new List<Guid>(),
+
+                Genres = _context.Genres.Select(g => new SelectListItem
                 {
                     Value = g.Id.ToString(),
                     Text = g.Name
-                }).ToList(),
-                // Pre-populate Cast names and images
-                CastNames = movie.MovieCasts.Select(mc => mc.Cast.Name).ToList(),
-                CastImages = movie.MovieCasts.Select(mc => mc.Cast.ImageUrl).ToList()
+                }).ToList()
             };
+
+
+            // Ensure there are exactly 3 slots for CastNames and CastImages
+            while (model.CastNames.Count < 3)
+            {
+                model.CastNames.Add(string.Empty);
+            }
+
+            while (model.CastImages.Count < 3)
+            {
+                model.CastImages.Add(string.Empty);
+            }
 
             return View(model);
         }
 
 
-        [HttpPost]
-        public IActionResult Edit(EditMovieViewModel model)
-        {
-            var errors = new List<string>();
 
-            // Add validation for movie fields
-            if (string.IsNullOrWhiteSpace(model.Title))
-                errors.Add("Title cannot be empty.");
-            if (model.Year <= 0)
-                errors.Add("Year is required and must be a positive number.");
-            if (model.DurationMinutes <= 0)
-                errors.Add("Duration is required and must be a positive number.");
-            if (string.IsNullOrWhiteSpace(model.AgeRating))
-                errors.Add("Age Rating cannot be empty.");
-            if (model.RottenTomatoesRating < 0 || model.RottenTomatoesRating > 100)
-                errors.Add("Rotten Tomatoes Rating must be between 0 and 100.");
-            if (model.PriceRent <= 0)
-                errors.Add("Price for Rent is required and must be a positive number.");
-            if (model.PriceBuy <= 0)
-                errors.Add("Price for Buy is required and must be a positive number.");
-            if (string.IsNullOrWhiteSpace(model.TrailerUrl))
-                errors.Add("Movie Trailer URL cannot be empty.");
-            if (string.IsNullOrWhiteSpace(model.ImageUrl))
-                errors.Add("Movie Image URL cannot be empty.");
-            if (string.IsNullOrWhiteSpace(model.Description))
-                errors.Add("Description cannot be empty.");
+        //[HttpPost]
+        //public IActionResult Edit(EditMovieViewModel model)
+        //{
+        //    var errors = new List<string>();
 
-            // Validate cast members
-            if (model.CastNames == null || model.CastNames.Count < 1)
-            {
-                var existingCasts = _context.MovieCasts.Where(mc => mc.MovieId == model.Id).ToList();
-                if (!existingCasts.Any()) // Only enforce this rule if the movie has no existing cast
-                {
-                    errors.Add("At least one cast member must be added.");
-                }
-            }
+        //    // Add validation for movie fields
+        //    if (string.IsNullOrWhiteSpace(model.Title))
+        //        errors.Add("Title cannot be empty.");
+        //    if (model.Year <= 0)
+        //        errors.Add("Year is required and must be a positive number.");
+        //    if (model.DurationMinutes <= 0)
+        //        errors.Add("Duration is required and must be a positive number.");
+        //    if (string.IsNullOrWhiteSpace(model.AgeRating))
+        //        errors.Add("Age Rating cannot be empty.");
+        //    if (model.RottenTomatoesRating < 0 || model.RottenTomatoesRating > 100)
+        //        errors.Add("Rotten Tomatoes Rating must be between 0 and 100.");
+        //    if (model.PriceRent <= 0)
+        //        errors.Add("Price for Rent is required and must be a positive number.");
+        //    if (model.PriceBuy <= 0)
+        //        errors.Add("Price for Buy is required and must be a positive number.");
+        //    if (string.IsNullOrWhiteSpace(model.TrailerUrl))
+        //        errors.Add("Movie Trailer URL cannot be empty.");
+        //    if (string.IsNullOrWhiteSpace(model.ImageUrl))
+        //        errors.Add("Movie Image URL cannot be empty.");
+        //    if (string.IsNullOrWhiteSpace(model.Description))
+        //        errors.Add("Description cannot be empty.");
 
-            if (errors.Any())
-            {
-                TempData["ValidationErrors"] = JsonConvert.SerializeObject(errors);
-                return ReloadEditMovieView(model);
-            }
+        //    // Validate cast members
+        //    if (model.CastNames == null || model.CastNames.Count < 1)
+        //    {
+        //        var existingCasts = _context.MovieCasts.Where(mc => mc.MovieId == model.Id).ToList();
+        //        if (!existingCasts.Any()) // Only enforce this rule if the movie has no existing cast
+        //        {
+        //            errors.Add("At least one cast member must be added.");
+        //        }
+        //    }
 
-            // Update movie details
-            var movie = _context.Movies.Include(m => m.MovieCasts).FirstOrDefault(m => m.Id == model.Id);
-            if (movie == null)
-            {
-                return NotFound();
-            }
+        //    if (errors.Any())
+        //    {
+        //        TempData["ValidationErrors"] = JsonConvert.SerializeObject(errors);
+        //        return ReloadEditMovieView(model);
+        //    }
 
-            var userId = _userManager.GetUserId(User);
-            movie.Title = model.Title;
-            movie.Year = model.Year;
-            movie.DurationMinutes = model.DurationMinutes;
-            movie.AgeRating = model.AgeRating;
-            movie.RottenTomatoesRating = model.RottenTomatoesRating;
-            movie.PriceRent = model.PriceRent;
-            movie.PriceBuy = model.PriceBuy;
-            movie.Description = model.Description;
-            movie.TrailerUrl = model.TrailerUrl;
-            movie.ImageUrl = model.ImageUrl;
-            movie.ModifiedDate = DateTime.Now;
-            movie.CreatedBy = userId;
+        //    // Update movie details
+        //    var movie = _context.Movies.Include(m => m.MovieCasts).FirstOrDefault(m => m.Id == model.Id);
+        //    if (movie == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            // Remove existing genres and add selected ones
-            var existingGenres = _context.MovieGenres.Where(mg => mg.MovieId == movie.Id).ToList();
-            _context.MovieGenres.RemoveRange(existingGenres);
-            foreach (var genreId in model.GenreIds)
-            {
-                _context.MovieGenres.Add(new MovieGenre { MovieId = movie.Id, GenreId = genreId });
-            }
+        //    var userId = _userManager.GetUserId(User);
+        //    movie.Title = model.Title;
+        //    movie.Year = model.Year;
+        //    movie.DurationMinutes = model.DurationMinutes;
+        //    movie.AgeRating = model.AgeRating;
+        //    movie.RottenTomatoesRating = model.RottenTomatoesRating;
+        //    movie.PriceRent = model.PriceRent;
+        //    movie.PriceBuy = model.PriceBuy;
+        //    movie.Description = model.Description;
+        //    movie.TrailerUrl = model.TrailerUrl;
+        //    movie.ImageUrl = model.ImageUrl;
+        //    movie.ModifiedDate = DateTime.Now;
+        //    movie.CreatedBy = userId;
 
-            // Remove existing cast members and add the new ones
-            var existingMovieCasts = _context.MovieCasts.Where(mc => mc.MovieId == movie.Id).ToList();
-            _context.MovieCasts.RemoveRange(existingMovieCasts);
+        //    // Remove existing genres and add selected ones
+        //    var existingGenres = _context.MovieGenres.Where(mg => mg.MovieId == movie.Id).ToList();
+        //    _context.MovieGenres.RemoveRange(existingGenres);
+        //    foreach (var genreId in model.GenreIds)
+        //    {
+        //        _context.MovieGenres.Add(new MovieGenre { MovieId = movie.Id, GenreId = genreId });
+        //    }
 
-            if (model.CastNames != null)
-            {
-                foreach (var castName in model.CastNames)
-                {
-                    var cast = _context.Cast.FirstOrDefault(c => c.Name == castName.Trim());
-                    if (cast == null)
-                    {
-                        cast = new Cast
-                        {
-                            Name = castName.Trim(),
-                            CreatedDate = DateTime.Now,
-                            ModifiedDate = DateTime.Now,
-                            CreatedBy = userId
-                        };
-                        _context.Cast.Add(cast);
-                        _context.SaveChanges();
-                    }
+        //    // Remove existing cast members and add the new ones
+        //    var existingMovieCasts = _context.MovieCasts.Where(mc => mc.MovieId == movie.Id).ToList();
+        //    _context.MovieCasts.RemoveRange(existingMovieCasts);
 
-                    _context.MovieCasts.Add(new MovieCast { MovieId = movie.Id, CastId = cast.Id });
-                }
-            }
+        //    if (model.CastNames != null)
+        //    {
+        //        foreach (var castName in model.CastNames)
+        //        {
+        //            var cast = _context.Cast.FirstOrDefault(c => c.Name == castName.Trim());
+        //            if (cast == null)
+        //            {
+        //                cast = new Cast
+        //                {
+        //                    Name = castName.Trim(),
+        //                    CreatedDate = DateTime.Now,
+        //                    ModifiedDate = DateTime.Now,
+        //                    CreatedBy = userId
+        //                };
+        //                _context.Cast.Add(cast);
+        //                _context.SaveChanges();
+        //            }
 
-            _context.SaveChanges();
-            TempData["Success"] = "Movie updated successfully!";
-            return RedirectToAction("ListMovies");
-        }
+        //            _context.MovieCasts.Add(new MovieCast { MovieId = movie.Id, CastId = cast.Id });
+        //        }
+        //    }
+
+        //    _context.SaveChanges();
+        //    TempData["Success"] = "Movie updated successfully!";
+        //    return RedirectToAction("ListMovies");
+        //}
 
 
 

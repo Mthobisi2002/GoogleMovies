@@ -1,186 +1,71 @@
-﻿@using Newtonsoft.Json;
-@model EditMovieViewModel
-
+﻿@model GoogleMovies.Models.EditMovieViewModel
 
 <h2>Edit Movie</h2>
 
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
 
-@if (TempData["ValidationErrors"] != null)
-{
-    var validationErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ValidationErrors"].ToString());
-    if (validationErrors != null && validationErrors.Any())
-    {
-        <div class="alert alert-danger">
-            <ul>
-                @foreach (var error in validationErrors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </div>
-    }
-}
-
-@if (TempData["ExceptionErrors"] != null)
-{
-    var exceptionErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ExceptionErrors"].ToString());
-    if (exceptionErrors != null && exceptionErrors.Any())
-    {
-        <div class="alert alert-warning">
-            @foreach (var error in exceptionErrors)
-            {
-                <p>@error</p>
-            }
-        </div>
-    }
-}
-
-<form asp-controller="Admin" asp-action="Edit" method="post">
-    <!-- Movie Title -->
     <div>
-        <label for="Title">Title</label>
-        <input type="text" id="Title" name="Title" value="@Model.Title" required />
-    </div>
-
-    <!-- Genre Dropdown -->
-    <div>
-        <label for="GenreIds">Genres</label>
-        <select id="GenreIds" name="GenreIds" multiple required>
-            @foreach (var genre in Model.GenreList)
-            {
-                <option value="@genre.Value">@genre.Text</option>
-            }
-        </select>
-    </div>
-
-    <!-- Description -->
-    <div>
-        <label for="Description">Description</label>
-        <textarea id="Description" name="Description">@Model.Description</textarea>
-    </div>
-
-    <!-- Year -->
-    <div>
-        <label for="Year">Year</label>
-        <input type="number" id="Year" name="Year" value="@Model.Year" required />
-    </div>
-
-    <!-- Duration -->
-    <div>
-        <label for="DurationMinutes">Duration (Minutes)</label>
-        <input type="number" id="DurationMinutes" name="DurationMinutes" value="@Model.DurationMinutes" required />
-    </div>
-
-    <!-- Age Rating -->
-    <div>
-        <label for="AgeRating">Age Rating</label>
-        <input type="text" id="AgeRating" name="AgeRating" value="@Model.AgeRating" required />
-    </div>
-
-    <!-- Rotten Tomatoes Rating -->
-    <div>
-        <label for="RottenTomatoesRating">Rotten Tomatoes Rating</label>
-        <input type="number" step="0.01" id="RottenTomatoesRating" name="RottenTomatoesRating" value="@Model.RottenTomatoesRating" required />
-    </div>
-
-    <!-- Price for Rent -->
-    <div>
-        <label for="PriceRent">Price (Rent)</label>
-        <input type="number" step="0.01" id="PriceRent" name="PriceRent" value="@Model.PriceRent" required />
-    </div>
-
-    <!-- Price for Buy -->
-    <div>
-        <label for="PriceBuy">Price (Buy)</label>
-        <input type="number" step="0.01" id="PriceBuy" name="PriceBuy" value="@Model.PriceBuy" required />
-    </div>
-
-    <!-- Trailer URL -->
-    <div>
-        <label for="TrailerUrl">Trailer URL</label>
-        <input type="url" id="TrailerUrl" name="TrailerUrl" value="@Model.TrailerUrl" />
-    </div>
-
-    <!-- Movie Image URL -->
-    <div>
-        <label for="ImageUrl">Movie Image URL</label>
-        <input type="url" id="ImageUrl" name="ImageUrl" value="@Model.ImageUrl" />
+        <label asp-for="Title">Title</label>
+        <input asp-for="Title" />
     </div>
 
     <div>
-        <label>Cast Members (Min: 1, Max: 3)</label>
+        <label>Genres</label>
+        <select asp-for="GenreIds" asp-items="Model.Genres" multiple></select>
+    </div>
+    <div>
+        <label asp-for="Description">Description</label>
+        <textarea asp-for="Description"></textarea>
+    </div>
+    <div>
+        <label asp-for="Year">Year</label>
+        <input asp-for="Year" />
+    </div>
+    <div>
+        <label asp-for="DurationMinutes">Duration (Minutes)</label>
+        <input asp-for="DurationMinutes" />
+    </div>
+    <div>
+        <label asp-for="AgeRating">Age Rating</label>
+        <input asp-for="AgeRating" />
+    </div>
+    <div>
+        <label asp-for="RottenTomatoesRating">Rotten Tomatoes Rating</label>
+        <input asp-for="RottenTomatoesRating" />
+    </div>
+    <div>
+        <label asp-for="PriceRent">Price (Rent)</label>
+        <input asp-for="PriceRent" />
+    </div>
+    <div>
+        <label asp-for="PriceBuy">Price (Buy)</label>
+        <input asp-for="PriceBuy" />
+    </div>
+    <div>
+        <label asp-for="TrailerUrl">Trailer URL</label>
+        <input asp-for="TrailerUrl" />
+    </div>
+    <div>
+        <label asp-for="ImageUrl">Image URL</label>
+        <input asp-for="ImageUrl" />
+    </div>
+
+    <div>
+        <label>Cast Members</label>
         <div id="cast-container">
-            @if (Model.CastNames != null && Model.CastNames.Count > 0)
-            {
-                @for (int i = 0; i < Model.CastNames.Count; i++)
-                {
-                    <div class="cast-entry">
-                        <input type="text" name="CastNames[@i]" class="cast-input" placeholder="Enter cast name" value="@Model.CastNames[i]" required />
-                        <input type="text" name="CastImages[@i]" class="cast-image-input" placeholder="Enter cast image URL" value="@(Model.CastImages != null && Model.CastImages.Count > i ? Model.CastImages[i] : "")" />
-                    </div>
-                }
-            }
-            else
+            @for (int i = 0; i < 3; i++) // Always loop for 3 cast inputs
             {
                 <div class="cast-entry">
-                    <input type="text" name="CastNames[0]" class="cast-input" placeholder="Enter cast name" required />
-                    <input type="text" name="CastImages[0]" class="cast-image-input" placeholder="Enter cast image URL" />
+                    <label>Cast Name</label>
+                    <input type="text" name="CastNames[@i]" value="@Model.CastNames[i]" />
+
+                    <label>Cast Image URL</label>
+                    <input type="text" name="CastImages[@i]" value="@Model.CastImages[i]" />
                 </div>
             }
         </div>
     </div>
 
-
-    <!-- Save Button -->
-    <button type="submit">Save Movie</button>
+    <button type="submit">Save Changes</button>
 </form>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const castContainer = document.getElementById("cast-container");
-        const addCastBtn = document.getElementById("add-cast-btn");
-
-        // Function to create a new cast input group
-        function createCastInput(index) {
-            const div = document.createElement("div");
-            div.classList.add("cast-entry");
-
-            div.innerHTML = `
-                        <input type="text" name="CastNames[${index}]" class="cast-input" placeholder="Enter cast name" required />
-                        <input type="text" name="CastImages[${index}]" class="cast-image-input" placeholder="Enter cast image URL" />
-                        <button type="button" class="remove-cast-btn">Remove</button>
-                    `;
-
-            return div;
-        }
-
-        // Add a new cast input when the button is clicked
-        addCastBtn.addEventListener("click", () => {
-            const currentCastCount = castContainer.querySelectorAll(".cast-entry").length;
-            if (currentCastCount < 3) {
-                const newCastInput = createCastInput(currentCastCount);
-                castContainer.appendChild(newCastInput);
-            } else {
-                alert("You can only add up to 3 cast members.");
-            }
-        });
-
-        // Remove a cast input when the "Remove" button is clicked
-        castContainer.addEventListener("click", (event) => {
-            if (event.target.classList.contains("remove-cast-btn")) {
-                const entryToRemove = event.target.closest(".cast-entry");
-                entryToRemove.remove();
-
-                // Re-index remaining cast inputs
-                const remainingInputs = castContainer.querySelectorAll(".cast-entry");
-                remainingInputs.forEach((entry, index) => {
-                    const castNameInput = entry.querySelector(".cast-input");
-                    const castImageInput = entry.querySelector(".cast-image-input");
-
-                    castNameInput.name = `CastNames[${index}]`;
-                    castImageInput.name = `CastImages[${index}]`;
-                });
-            }
-        });
-    });
-</script>
