@@ -15,7 +15,7 @@ namespace GoogleMovies.Models
         public string TrailerUrl { get; set; }
         public string ImageUrl { get; set; }
         public string Description { get; set; }
-        public List<Guid> GenreIds { get; set; } = new List<Guid>(); // ✅ Ensure it's always initialized
+        public List<Guid> GenreIds { get; set; }// ✅ Ensure it's always initialized
         public List<string> CastNames { get; set; } = new List<string>(); // ✅ No more null errors
         public List<string> CastImages { get; set; } = new List<string>(); // ✅ Avoid null errors
         public List<SelectListItem> GenreList { get; set; } = new List<SelectListItem>(); // ✅ Always initialized
@@ -24,6 +24,7 @@ namespace GoogleMovies.Models
         public string CreatedBy { get; set; }
 
         // Add this property
+
         public List<SelectListItem> Genres { get; set; }
     }
 

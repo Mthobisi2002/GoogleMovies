@@ -1,6 +1,37 @@
-﻿@model GoogleMovies.Models.EditMovieViewModel
+﻿@using Newtonsoft.Json;
+@model GoogleMovies.Models.EditMovieViewModel
 
 <h2>Edit Movie</h2>
+
+@if (TempData["ValidationErrors"] != null)
+{
+    var validationErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ValidationErrors"].ToString());
+    if (validationErrors != null && validationErrors.Any())
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var error in validationErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+}
+
+@if (TempData["ExceptionErrors"] != null)
+{
+    var exceptionErrors = JsonConvert.DeserializeObject<List<string>>(TempData["ExceptionErrors"].ToString());
+    if (exceptionErrors != null && exceptionErrors.Any())
+    {
+        <div class="alert alert-warning">
+            @foreach (var error in exceptionErrors)
+            {
+                <p>@error</p>
+            }
+        </div>
+    }
+}
 
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="Id" />
@@ -12,7 +43,8 @@
 
     <div>
         <label>Genres</label>
-        <select asp-for="GenreIds" asp-items="Model.Genres" multiple></select>
+        <select asp-for="GenreIds" asp-items="Model.Genres" multiple required></select>
+
     </div>
     <div>
         <label asp-for="Description">Description</label>
@@ -69,3 +101,4 @@
 
     <button type="submit">Save Changes</button>
 </form>
+
