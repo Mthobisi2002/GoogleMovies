@@ -1,4 +1,5 @@
-﻿@model List<Movie>
+﻿@using Microsoft.AspNetCore.Http
+@model List<Movie>
 
 <h2>Movie List</h2>
 
@@ -24,6 +25,21 @@
         @TempData["Success"]
     </div>
 }
+
+@if (TempData["Info"] != null)
+{
+        <div class="alert alert-info">
+        @TempData["Info"]
+        </div>
+}
+
+<div>
+    <input type="text" id="searchBox" placeholder="Search by movie or cast name..." />
+</div>
+
+<div id="searchResults">
+    <!-- Results will be dynamically added here -->
+</div>
 
 
 <table class="table">
@@ -70,7 +86,90 @@
 <a asp-action="Add" class="btn btn-primary">Add New Movie</a>
 
 <script>
-    setTimeout(function () {
-        document.querySelector('.alert-success')?.remove();
-    }, 5000);
+    const generalTable = document.querySelector("table.table"); // Your general movie list table
+    const searchBox = document.getElementById("searchBox");
+    const searchResults = document.getElementById("searchResults");
+
+    searchBox.addEventListener("input", function () {
+        const query = searchBox.value.trim();
+
+        if (query.length === 0) {
+            searchResults.innerHTML = ""; // Clear results when input is empty
+            generalTable.style.display = "table"; // Show the general movie table
+            return;
+        }
+
+        generalTable.style.display = "none"; // Hide the general movie table during search
+
+        // Make an AJAX call to fetch search results
+        fetch(`/Admin/SearchMoviesApi?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const movies = data.data;
+                    searchResults.innerHTML = ""; // Clear previous results
+
+                    if (movies.length > 0) {
+                        // Create the table for the search results
+                        let table = document.createElement("table");
+                        table.classList.add("table");
+
+                        let tableHead = document.createElement("thead");
+                        tableHead.innerHTML = `
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Genres</th>
+                                <th>Year</th>
+                                <th>Duration (min)</th>
+                                <th>Age Rating</th>
+                                <th>Rotten Tomatoes</th>
+                                <th>Created Date</th>
+                                <th>Modified Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        `;
+                        table.appendChild(tableHead);
+
+                        let tableBody = document.createElement("tbody");
+
+                        // Add each movie as a row in the table
+                        movies.forEach((movie, index) => {
+                            let row = document.createElement("tr");
+                            row.innerHTML = `
+                                <td>${index + 1}</td>
+                                <td>${movie.title}</td>
+                                <td>${movie.genres}</td>
+                                <td>${movie.year}</td>
+                                <td>${movie.durationMinutes}</td>
+                                <td>${movie.ageRating}</td>
+                                <td>${movie.rottenTomatoesRating}</td>
+                                <td>${movie.createdDate}</td>
+                                <td>${movie.modifiedDate}</td>
+                                <td>
+                                    <a href="/Admin/Edit/${movie.id}" class="btn btn-warning btn-sm">Edit</a>
+                                    <form action="/Admin/Delete/${movie.id}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+                                    </form>
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+
+                        table.appendChild(tableBody);
+                        searchResults.appendChild(table);
+                    } else {
+                        searchResults.innerHTML = "<p>No movies found.</p>";
+                    }
+                } else {
+                    searchResults.innerHTML = `<p>${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching search results:", error);
+                searchResults.innerHTML = "<p>Error fetching search results.</p>";
+            });
+    });
+
+
 </script>

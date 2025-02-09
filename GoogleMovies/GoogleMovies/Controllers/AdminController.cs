@@ -228,6 +228,50 @@ namespace GoogleMovies.Controllers
             return View(movies);
         }
 
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public IActionResult SearchMoviesApi(string query)
+        {
+            if (string.IsNullOrEmpty(query))
+            {
+                return Json(new { success = false, message = "Query is empty." });
+            }
+
+            // Search logic to return relevant movie details
+            var results = _context.Movies
+                .Include(m => m.MovieGenres)
+                .ThenInclude(mg => mg.Genre)
+                .Include(m => m.MovieCasts)
+                .ThenInclude(mc => mc.Cast)
+                .Where(m =>
+                    m.Title.Contains(query) ||
+                    m.MovieCasts.Any(mc => mc.Cast.Name.Contains(query)))
+                .Select(m => new
+                {
+                    m.Id,
+                    m.Title,
+                    Genres = string.Join(", ", m.MovieGenres.Select(mg => mg.Genre.Name)),
+                    m.Year,
+                    m.DurationMinutes,
+                    m.AgeRating,
+                    RottenTomatoesRating = $"{m.RottenTomatoesRating}%",
+                    m.CreatedDate,
+                    m.ModifiedDate
+                })
+                .Take(10) // Limit results for performance
+                .ToList();
+
+            return Json(new { success = true, data = results });
+        }
+
+
+
+
+
+
+
+
         [HttpPost]
         public IActionResult Delete(Guid id)
         {

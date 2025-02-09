@@ -2,13 +2,21 @@
 
 <h2>Verify Your Email</h2>
 
-@if (TempData["Message"] != null)
+@if (TempData["VerificationType"] != null)
 {
-    <div class="alert alert-success">@TempData["Message"]</div>
+    <div class="alert alert-success">@TempData["VerificationType"]</div>
 }
-@if (TempData["LoggerError"] != null)
+@if (!ViewData.ModelState.IsValid)
 {
-    <div class="alert alert-danger">@TempData["LoggerError"]</div>
+    <div class="alert alert-danger">
+        @Html.ValidationSummary(false, "Please address the following issues:")
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
 }
 
 <form asp-action="VerifyEmail" method="post">
@@ -31,3 +39,9 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+
+<script>
+    setTimeout(function () {
+        document.querySelector('.alert-success')?.remove();
+    }, 5000);
+</script>

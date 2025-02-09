@@ -86,57 +86,87 @@ namespace GoogleMovies.Controllers
         {
             if (ModelState.IsValid)
             {
-                var identityUser = new IdentityUser { UserName = model.Email, Email = model.Email };
-                var result = await _userManager.CreateAsync(identityUser, model.Password);
-
-                if (result.Succeeded)
+                try
                 {
 
-                    // Save the user to the custom table
-                    var customUser = new User
+                    // Check if passwords match
+                    if (model.Password != model.ConfirmPassword)
                     {
-                        FullName = model.FullName, // Assuming FullName is part of the RegisterViewModel
-                        Email = model.Email,
-                        IdentityUserId = identityUser.Id
-                    };
-
-                    _context.Users.Add(customUser); // Add the custom user to the database
-                    await _context.SaveChangesAsync(); // Save changes to persist
-
-                    // Assign the "Customer" role to the user
-                    var roleResult = await _userManager.AddToRoleAsync(identityUser, "Customer");
-                    if (!roleResult.Succeeded)
-                    {
-                        // Handle role assignment errors
-                        foreach (var error in roleResult.Errors)
-                        {
-                            ModelState.AddModelError(string.Empty, $"Role assignment error: {error.Description}");
-                        }
-
-                        // Optional: You can decide to remove the user and custom data if role assignment fails
+                        ModelState.AddModelError("ConfirmPassword", "The password and confirmation password do not match.");
+                        return View(model);
                     }
 
-                    string token = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+                    // Check if the email already exists in the AspNetUsers table
+                    var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                    if (existingUser != null)
+                    {
+                        ModelState.AddModelError("Email", "An account with this email already exists.");
+                        return View(model);
+                    }
 
-                    string subject = "Welcome to Google Movies - Verify Your Email";
-                    string body = $@"
+
+                    var identityUser = new IdentityUser { UserName = model.Email, Email = model.Email };
+                    var result = await _userManager.CreateAsync(identityUser, model.Password);
+
+                    if (result.Succeeded)
+                    {
+
+                        // Save the user to the custom table
+                        var customUser = new User
+                        {
+                            FullName = model.FullName, // Assuming FullName is part of the RegisterViewModel
+                            Email = model.Email,
+                            IdentityUserId = identityUser.Id,
+                            CreatedDate = DateTime.Now,
+                            ModifiedDate = DateTime.Now,
+                            CreatedBy = identityUser.Id
+                        };
+
+                        _context.Users.Add(customUser); // Add the custom user to the database
+                        await _context.SaveChangesAsync(); // Save changes to persist
+
+                        // Assign the "Customer" role to the user
+                        var roleResult = await _userManager.AddToRoleAsync(identityUser, "Customer");
+                        if (!roleResult.Succeeded)
+                        {
+                            // Handle role assignment errors
+                            foreach (var error in roleResult.Errors)
+                            {
+                                ModelState.AddModelError(string.Empty, $"Role assignment error: {error.Description}");
+                            }
+
+                            // Optional: You can decide to remove the user and custom data if role assignment fails
+                        }
+
+                        string token = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+
+                        string subject = "Welcome to Google Movies - Verify Your Email";
+                        string body = $@"
                 <h1>Welcome to Google Movies!</h1>
                 <p>Your verification code is: <strong>{token}</strong></p>
                 <p>Please enter this code on the verification page to confirm your email.</p>";
 
-                    await _emailSender.SendEmailAsync(identityUser.Email, subject, body);
+                        await _emailSender.SendEmailAsync(identityUser.Email, subject, body);
 
-                    TempData["VerificationType"] = "Registration"; // Store verification type in TempData
-                    TempData["Email"] = identityUser.Email; // Store email in TempData
-                    TempData["Token"] = token; // Optional: You may want to store the token for debugging or testing purposes
+                        TempData["VerificationType"] = "Registration"; // Store verification type in TempData
+                                                                       //TempData["Email"] = identityUser.Email; // Store email in TempData
+                                                                       //TempData["Token"] = token; // Optional: You may want to store the token for debugging or testing purposes
 
-                    return RedirectToAction("VerifyEmail", "Account");
+                        return RedirectToAction("VerifyEmail", "Account");
+                    }
+
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
                 }
-
-                foreach (var error in result.Errors)
+                catch (Exception ex)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    // Log the exception (optional: use a logging library)
+                    TempData["Error"] = $"An error occurred while processing your request: {ex.Message}";
+                    return View(model); // Keep the user on the same page
                 }
+
             }
 
             return View(model);
@@ -168,51 +198,60 @@ namespace GoogleMovies.Controllers
                 return View(model);
             }
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
+            try
             {
-                ModelState.AddModelError("", "Invalid email address.");
-                return View(model);
-            }
-
-            IdentityResult result = null; // Initialize the variable
-
-            if (model.VerificationType == "Registration")
-            {
-                result = await _userManager.ConfirmEmailAsync(user, model.Token);
-                if (result.Succeeded)
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
                 {
-                    TempData["Message"] = "Your email has been successfully verified!";
-                    return RedirectToAction("Login", "Account");
+                    ModelState.AddModelError("", "Invalid email address.");
+                    return View(model);
+                }
+
+                IdentityResult result = null; // Initialize the variable
+
+                if (model.VerificationType == "Registration")
+                {
+                    result = await _userManager.ConfirmEmailAsync(user, model.Token);
+                    if (result.Succeeded)
+                    {
+                        TempData["Message"] = "Your email has been successfully verified!";
+                        return RedirectToAction("Login", "Account");
+                    }
+                }
+                else if (model.VerificationType == "ResetPassword")
+                {
+                    // Token verification only
+                    var isValidToken = await _userManager.VerifyUserTokenAsync(
+                        user,
+                        _userManager.Options.Tokens.PasswordResetTokenProvider,
+                        "ResetPassword",
+                        model.Token);
+
+                    if (isValidToken)
+                    {
+                        TempData["UserId"] = user.Id; // Store UserId in TempData
+                        TempData["Token"] = model.Token;
+                        return RedirectToAction("ResetPassword", "Account");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Invalid or expired token.");
+                    }
+                }
+
+                if (result != null)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
                 }
             }
-            else if (model.VerificationType == "ResetPassword")
+            catch (Exception ex)
             {
-                // Token verification only
-                var isValidToken = await _userManager.VerifyUserTokenAsync(
-                    user,
-                    _userManager.Options.Tokens.PasswordResetTokenProvider,
-                    "ResetPassword",
-                    model.Token);
-
-                if (isValidToken)
-                {
-                    TempData["UserId"] = user.Id; // Store UserId in TempData
-                    TempData["Token"] = model.Token;
-                    return RedirectToAction("ResetPassword", "Account");
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Invalid or expired token.");
-                }
-            }
-
-            if (result != null)
-            {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                // Log the exception (optional: use a logging library)
+                TempData["Error"] = $"An error occurred while processing your request: {ex.Message}";
+                return View(model); // Keep the user on the same page
             }
 
             return View(model);
@@ -236,38 +275,50 @@ namespace GoogleMovies.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
-
-                if (result.Succeeded)
+                try
                 {
-                    var user = await _userManager.FindByEmailAsync(model.Email);
-                    if (user != null)
+
+                    var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+
+                    if (result.Succeeded)
                     {
-                        // Generate JWT token
-                        var token = GenerateJwtToken(user);
+                        var user = await _userManager.FindByEmailAsync(model.Email);
+                        if (user != null)
+                        {
+                            // Generate JWT token
+                            var token = GenerateJwtToken(user);
 
-                        // Set the token in an HttpOnly cookie
-                        Response.Cookies.Append("AuthToken", token, new CookieOptions
-                        {
-                            HttpOnly = true,
-                            Secure = true, // Ensures the cookie is sent over HTTPS
-                            SameSite = SameSiteMode.Strict, // Prevents cross-site cookie usage
-                            Expires = DateTime.UtcNow.AddHours(1) // Token expiration
-                        });
+                            // Set the token in an HttpOnly cookie
+                            Response.Cookies.Append("AuthToken", token, new CookieOptions
+                            {
+                                HttpOnly = true,
+                                Secure = true, // Ensures the cookie is sent over HTTPS
+                                SameSite = SameSiteMode.Strict, // Prevents cross-site cookie usage
+                                Expires = DateTime.UtcNow.AddHours(1) // Token expiration
+                            });
 
-                        // Redirect based on user role (admin or customer)
-                        if (_userManager.IsInRoleAsync(user, "Admin").Result)
-                        {
-                            return RedirectToAction("ListMovies", "Admin");
-                        }
-                        else
-                        {
-                            return RedirectToAction("Index", "Home");
+                            // Redirect based on user role (admin or customer)
+                            if (_userManager.IsInRoleAsync(user, "Admin").Result)
+                            {
+                                return RedirectToAction("ListMovies", "Admin");
+                            }
+                            else
+                            {
+                                return RedirectToAction("Index", "Home");
+                            }
                         }
                     }
+
+                    // Add validation error for invalid credentials
+                    ModelState.AddModelError(string.Empty, "Email or Password Invalid");
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception (optional: use a logging library)
+                    TempData["Error"] = $"An error occurred while processing your request: {ex.Message}";
+                    return View(model); // Keep the user on the same page
                 }
 
-                ModelState.AddModelError("", "Invalid login attempt.");
             }
             return View(model);
         }
@@ -316,24 +367,40 @@ namespace GoogleMovies.Controllers
                 return View(model);
             }
 
-            var user = await _userManager.FindByIdAsync(model.UserId);
-            if (user == null)
+            try
             {
-                return BadRequest("Invalid user.");
-            }
+                // Check if the new password matches the confirm password
+                if (model.NewPassword != model.ConfirmPassword)
+                {
+                    ModelState.AddModelError("", "The new password and confirm password do not match.");
+                    return View(model);
+                }
 
-            var resetResult = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
-            if (resetResult.Succeeded)
+
+                var user = await _userManager.FindByIdAsync(model.UserId);
+                if (user == null)
+                {
+                    return BadRequest("Invalid user.");
+                }
+
+                var resetResult = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+                if (resetResult.Succeeded)
+                {
+                    TempData["Message"] = "Password reset successful! You can now log in.";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                //foreach (var error in resetResult.Errors)
+                //{
+                //    ModelState.AddModelError(string.Empty, error.Description);
+                //}
+
+            }
+            catch (Exception ex)
             {
-                TempData["Message"] = "Password reset successful! You can now log in.";
-                return RedirectToAction("Login", "Account");
+                // Log the exception (optional)
+                TempData["Error"] = $"An error occurred while processing your request: {ex.Message}";
             }
-
-            foreach (var error in resetResult.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
             return View(model);
         }
 
@@ -353,31 +420,40 @@ namespace GoogleMovies.Controllers
             {
                 return View(model);
             }
-
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+            try
             {
-                // Security measure: don't reveal if the user or confirmation status
-                TempData["Message"] = "If your email is registered and verified, you will receive a password reset email.";
-                return RedirectToAction("ForgotPasswordConfirmation");
-            }
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+                {
+                    // Security measure: don't reveal if the user or confirmation status
+                    TempData["Message"] = "Invalid Email";
+                    return View(model);
+                }
 
-            // Generate the password reset token
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                // Generate the password reset token
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // Send the token via email
-            string subject = "Password Reset Request";
-            string body = $@"
+                // Send the token via email
+                string subject = "Password Reset Request";
+                string body = $@"
         <h1>Password Reset</h1>
         <p>Your password reset verification code is: <strong>{token}</strong></p>
         <p>Please use this code to reset your password.</p>";
 
-            await _emailSender.SendEmailAsync(user.Email, subject, body);
+                await _emailSender.SendEmailAsync(user.Email, subject, body);
 
-            TempData["VerificationType"] = "ResetPassword";
-            TempData["Email"] = user.Email;
+                TempData["VerificationType"] = "ResetPassword";
+                TempData["Email"] = user.Email;
 
-            return RedirectToAction("VerifyEmail", "Account");
+                return RedirectToAction("VerifyEmail", "Account");
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (optional: log the error using a logging library)
+                TempData["Error"] = $"An error occurred while processing your request: {ex.Message}";
+                return View(model); // Keep the user on the same page
+            }
+
         }
 
 

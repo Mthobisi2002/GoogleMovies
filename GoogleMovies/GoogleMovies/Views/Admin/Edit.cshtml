@@ -86,19 +86,79 @@
     <div>
         <label>Cast Members</label>
         <div id="cast-container">
-            @for (int i = 0; i < 3; i++) // Always loop for 3 cast inputs
+            @for (int i = 0; i < Model.CastNames.Count; i++)
             {
-                <div class="cast-entry">
+                <div class="cast-entry" data-index="@i">
                     <label>Cast Name</label>
-                    <input type="text" name="CastNames[@i]" value="@Model.CastNames[i]" />
+                    <input type="text" name="CastNames[@i]" value="@Model.CastNames[i]" required />
 
                     <label>Cast Image URL</label>
                     <input type="text" name="CastImages[@i]" value="@Model.CastImages[i]" />
+
+                    <button type="button" class="remove-cast">Remove</button>
                 </div>
             }
         </div>
+
+        <button type="button" id="add-cast">Add Cast</button>
     </div>
+
 
     <button type="submit">Save Changes</button>
 </form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const castContainer = document.getElementById("cast-container");
+        const addCastButton = document.getElementById("add-cast");
+
+        // Function to add a new cast entry
+        function addCastEntry() {
+            const currentIndex = castContainer.children.length; // Get the next index
+            const castEntry = document.createElement("div");
+            castEntry.classList.add("cast-entry");
+            castEntry.setAttribute("data-index", currentIndex);
+
+            castEntry.innerHTML = `
+                    <label>Cast Name</label>
+                    <input type="text" name="CastNames[${currentIndex}]" required />
+
+                    <label>Cast Image URL</label>
+                    <input type="text" name="CastImages[${currentIndex}]" />
+
+                    <button type="button" class="remove-cast">Remove</button>
+                `;
+
+            castContainer.appendChild(castEntry);
+
+            // Attach the remove event to the new button
+            castEntry.querySelector(".remove-cast").addEventListener("click", () => {
+                castEntry.remove();
+                updateIndices();
+            });
+        }
+
+        // Function to update input field indices after a removal
+        function updateIndices() {
+            const entries = castContainer.querySelectorAll(".cast-entry");
+            entries.forEach((entry, index) => {
+                entry.setAttribute("data-index", index);
+                entry.querySelector("input[name^='CastNames']").setAttribute("name", `CastNames[${index}]`);
+                entry.querySelector("input[name^='CastImages']").setAttribute("name", `CastImages[${index}]`);
+            });
+        }
+
+        // Add new cast entry
+        addCastButton.addEventListener("click", addCastEntry);
+
+        // Attach remove event to existing buttons
+        castContainer.querySelectorAll(".remove-cast").forEach(button => {
+            button.addEventListener("click", function () {
+                this.closest(".cast-entry").remove();
+                updateIndices();
+            });
+        });
+    });
+</script>
+
 
