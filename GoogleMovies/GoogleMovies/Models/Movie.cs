@@ -24,5 +24,9 @@ namespace GoogleMovies.Models
         public DateTime CreatedDate { get; set; }
         public DateTime ModifiedDate { get; set; }
         public string CreatedBy { get; set; }
+
+        // New columns 13/05/2025
+        public bool IsTrending { get; set; }
+        public decimal BoxOffice { get; set; }
     }
 }

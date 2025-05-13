@@ -124,7 +124,9 @@ namespace GoogleMovies.Controllers
                     ImageUrl = model.ImageUrl,
                     CreatedDate = DateTime.Now,
                     ModifiedDate = DateTime.Now,
-                    CreatedBy = userId
+                    CreatedBy = userId,
+                    BoxOffice = 0,
+                    IsTrending = false
 
                 };
 
@@ -166,7 +168,8 @@ namespace GoogleMovies.Controllers
                                 ImageUrl = castImageUrl,
                                 CreatedDate = DateTime.Now,
                                 ModifiedDate = DateTime.Now,
-                                CreatedBy = userId
+                                CreatedBy = userId,
+                                IsTrending = false
                             };
                             _context.Cast.Add(cast);
                             _context.SaveChanges(); // Save to get the ID
