@@ -1,5 +1,6 @@
 ﻿using GoogleMovies.Data;
 using GoogleMovies.Models;
+using GoogleMovies.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -16,12 +17,14 @@ namespace GoogleMovies.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly MovieDbContext _context;
+        private readonly MovieSyncService _movieSyncService;
 
 
-        public AdminController(MovieDbContext context, UserManager<IdentityUser> userManager)
+        public AdminController(MovieDbContext context, UserManager<IdentityUser> userManager, MovieSyncService movieSyncService)
         {
             _context = context;
             _userManager = userManager;
+            _movieSyncService = movieSyncService;
         }
 
         [Authorize(Roles = "Admin")] // Restrict access to admins only
@@ -259,6 +262,8 @@ namespace GoogleMovies.Controllers
                     m.DurationMinutes,
                     m.AgeRating,
                     RottenTomatoesRating = $"{m.RottenTomatoesRating}%",
+                    m.IsTrending,
+                    m.BoxOffice,
                     m.CreatedDate,
                     m.ModifiedDate
                 })
@@ -537,6 +542,16 @@ namespace GoogleMovies.Controllers
             return View("Edit", model);
         }
 
+
+        //14/05/2025
+
+        [HttpPost]
+        public async Task<IActionResult> SyncTrendingMovies()
+        {
+            await _movieSyncService.SyncTrendingAndBoxOfficeAsync();
+            TempData["Sync"] = "Trending movies and box office data updated!";
+            return RedirectToAction("ListMovies");
+        }
 
 
     }
