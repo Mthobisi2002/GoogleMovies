@@ -20,3 +20,100 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/*New styles*/
+.carousel-container {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 1rem 2rem;
+    gap: 1rem;
+    scrollbar-width: none; /* Firefox */
+}
+
+.carousel::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+}
+
+.carousel-container button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+.left-btn {
+    left: 0.5rem;
+}
+
+.right-btn {
+    right: 0.5rem;
+}
+
+.movie-item {
+    min-width: 180px;
+    position: relative;
+    overflow: hidden;
+}
+
+.movie-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.movie-img {
+    width: 100%;
+    height: auto;
+    transition: transform 0.4s ease;
+    display: block;
+}
+
+.movie-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    text-align: left;
+    font-size: 0.8rem;
+}
+
+.movie-title {
+    font-weight: bold;
+}
+
+.movie-meta {
+    font-size: 0.75rem;
+}
+
+.movie-link {
+    font-size: 0.75rem;
+    color: #00bfff;
+    text-decoration: underline;
+}
+
+/* Hover Effects */
+.movie-wrapper:hover .movie-img {
+    transform: scale(1.15);
+}
+
+.movie-wrapper:hover .movie-info {
+    opacity: 1;
+}

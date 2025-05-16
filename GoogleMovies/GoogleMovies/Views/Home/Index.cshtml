@@ -7,102 +7,27 @@
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
 
-<style>
-    .movie-carousel {
-        padding: 20px;
-        background-color: #111;
-        color: white;
-    }
 
-    .carousel-container {
-        position: relative;
-        overflow: hidden;
-    }
+@model GoogleMovies.Models.HomeViewModel
 
-    .carousel {
-        display: flex;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        gap: 16px;
-        padding: 10px 0;
-    }
+<div class="text-white space-y-10">
+    <!-- Trending Section -->
+    <section>
+        <h2 class="text-xl font-bold mb-4">Trending Now</h2>
+        <partial name="_MovieCarousel" model="Model.Trending" />
+    </section>
 
-    .movie-card {
-        min-width: 150px;
-        flex-shrink: 0;
-        text-align: center;
-    }
+    <!-- Box Office Blockbusters -->
+    <section>
+        <h2 class="text-xl font-bold mb-4">Box Office Blockbusters</h2>
+        <partial name="_MovieCarousel" model="Model.Blockbusters" />
+    </section>
 
-        .movie-card img {
-            width: 100%;
-            height: auto;
-            border-radius: 10px;
-        }
+    <!-- Latest 2025 Movies -->
+    <section>
+        <h2 class="text-xl font-bold mb-4">Latest Movies of 2025</h2>
+        <partial name="_MovieCarousel" model="Model.LatestMovies" />
+    </section>
+</div>
 
-    .scroll-btn {
-        position: absolute;
-        top: 35%;
-        background-color: rgba(0,0,0,0.5);
-        color: white;
-        border: none;
-        font-size: 2em;
-        padding: 10px;
-        cursor: pointer;
-        z-index: 2;
-    }
-
-        .scroll-btn.left {
-            left: 0;
-        }
-
-        .scroll-btn.right {
-            right: 0;
-        }
-
-</style>
-
-
-<section class="movie-carousel">
-    <h2>Top Picks on Google Movies Clone</h2>
-    <div class="carousel-container">
-        <button class="scroll-btn left" onclick="scrollCarousel('left')">&#10094;</button>
-
-        <div id="movieScroll" class="carousel">
-            @foreach (var movie in Model.Trending)
-            {
-                <div class="movie-card">
-                    <img src="@movie.ImageUrl" alt="@movie.Title" />
-                    <p>@movie.Title</p>
-                </div>
-            }
-        </div>
-
-        <button class="scroll-btn right" onclick="scrollCarousel('right')">&#10095;</button>
-    </div>
-
-    <h2>2025</h2>
-    <div class="carousel-container">
-        <button class="scroll-btn left" onclick="scrollCarousel('left')">&#10094;</button>
-
-        <div id="movieScroll" class="carousel">
-            @foreach (var movie in Model.Trending)
-            {
-                <div class="movie-card">
-                    <img src="@movie.ImageUrl" alt="@movie.Title" />
-                    <p>@movie.Title</p>
-                </div>
-            }
-        </div>
-
-        <button class="scroll-btn right" onclick="scrollCarousel('right')">&#10095;</button>
-    </div>
-</section>
-
-<script>
-    function scrollCarousel(direction) {
-        const scrollBox = document.getElementById('movieScroll');
-        const scrollAmount = 300;
-        scrollBox.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-    }
-</script>
 

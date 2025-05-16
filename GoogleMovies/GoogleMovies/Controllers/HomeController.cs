@@ -30,19 +30,34 @@ namespace GoogleMovies.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var trending = await _context.Movies
-                .Where(m => m.IsTrending) // Or any logic
+            var topPicks = await _context.Movies
+                .Where(m => m.IsTrending)
+                .OrderByDescending(m => m.ModifiedDate)
+                .Take(10)
+                .ToListAsync();
+
+            var blockbusters = await _context.Movies
+                //.Where(m => m.BoxOffice >= 350_000_000)
+                .OrderByDescending(m => m.BoxOffice)
+                .Take(10)
+                .ToListAsync();
+
+            var latestMovies = await _context.Movies
+                .Where(m => m.Year == 2025)
                 .OrderByDescending(m => m.ModifiedDate)
                 .Take(10)
                 .ToListAsync();
 
             var viewModel = new HomeViewModel
             {
-                Trending = trending
+                Trending = topPicks,
+                Blockbusters = blockbusters,
+                LatestMovies = latestMovies
             };
 
             return View(viewModel);
         }
+
 
         public IActionResult Privacy()
         {

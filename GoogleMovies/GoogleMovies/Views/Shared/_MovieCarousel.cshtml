@@ -1,0 +1,25 @@
+﻿@model IEnumerable<GoogleMovies.Models.Movie>
+
+<div class="carousel-container relative">
+    <button class="left-btn">&#10094;</button>
+
+    <div class="carousel">
+        @foreach (var movie in Model)
+        {
+            <div class="movie-item">
+                <div class="movie-wrapper">
+                    <img src="@movie.ImageUrl" alt="@movie.Title" class="movie-img" />
+
+                    <div class="movie-info">
+                        <p class="movie-title">@movie.Title</p>
+                        <p class="movie-meta">Age: @movie.AgeRating</p>
+                        <p class="movie-meta">Year: @movie.Year</p>
+                        <a href="/Movies/Details/@movie.Id" class="movie-link">More Info</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <button class="right-btn">&#10095;</button>
+</div>
