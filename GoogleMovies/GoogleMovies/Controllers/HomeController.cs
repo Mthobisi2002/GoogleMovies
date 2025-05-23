@@ -37,7 +37,7 @@ namespace GoogleMovies.Controllers
                 .ToListAsync();
 
             var blockbusters = await _context.Movies
-                //.Where(m => m.BoxOffice >= 350_000_000)
+                .Where(m => m.BoxOffice >= 350_000_000)
                 .OrderByDescending(m => m.BoxOffice)
                 .Take(10)
                 .ToListAsync();
